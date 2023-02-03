@@ -1,0 +1,25 @@
+{
+  "name": "work_developer_bot",
+  "version": "1.0.0",
+  "description": "Чат бот будет присылать вакансии разработчиков с hh.ru",
+  "main": "bot.js",
+  "scripts": {
+    "dev": "nodemon bot.js",
+    "start": "node bot.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Nikita-Golubtsov/work_developer_bot.git"
+  },
+  "author": "Никита Голубцов",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Nikita-Golubtsov/work_developer_bot/issues"
+  },
+  "homepage": "https://github.com/Nikita-Golubtsov/work_developer_bot#readme",
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "node-telegram-bot-api": "^0.61.0",
+    "nodemon": "^2.0.20"
+  }
+}
