@@ -1,54 +1,63 @@
-const TelegramBotIp = require('node-telegram-bot-api');
+const { Telegraf, Markup } = require('telegraf');
 require('dotenv').config();
 
-const token = process.env.API_BOT;
-const check_lang = require('./module/check_langs');
-const get_jobs = require('./module/check_langs');
+const comands = require('./module/constants');
 
-const program_languges = [
-    ["JavaScript", "Python", "C#"],
-    ["Java", "C++", "C"],
-    ["PHP", "Go", "Ruby"]
-];
+const bot = new Telegraf(process.env.API_BOT);
 
-const keyboard_lang = {
-    "reply_markup": {
-        "keyboard": program_languges
+bot.start((ctx) => {
+    ctx.replyWithHTML(`Добро пожаловать! Чтобы начать поиск вакансий, укажите команду /вакансии`);
+});
+bot.help((ctx) => ctx.reply(comands.bot_comands));
+
+bot.command('jobs', async (ctx) => {
+    try {
+        await ctx.reply('Выбирите язык программирования', Markup.inlineKeyboard(
+            [
+                [Markup.button.callback('JavaScript', 'JavaScript'), Markup.button.callback('Python', 'Python'), Markup.button.callback('C#', 'C#')],
+                [Markup.button.callback('C++', 'C++'), Markup.button.callback('PHP', 'PHP'), Markup.button.callback('Java', 'Java')],
+                [Markup.button.callback('Go', 'Go'), Markup.button.callback('Swift', 'Swift'), Markup.button.callback('Kotlin', 'Kotlin')]
+            ]
+        ));
+    } catch (e) {
+        console.error(e);
+    }
+});
+
+function add_action(name) {
+    let job = {}
+    try {
+        bot.action(name, async (ctx) => {
+            await ctx.answerCbQuery();
+            await fetch(`https://api.hh.ru/vacancies/?text=${name}`)
+                .then(data => data.json())
+                .then(data => {
+                    job.name = data.items[0].name;
+                    job.city = `Город: ${data.items[0].address.city}`;
+                })
+
+            await ctx.reply(name, Markup.inlineKeyboard(
+                [
+                    [Markup.button.callback('Смотреть', 'watch')]
+                ]
+            ));
+        });
+    } catch (e) {
+        console.error(e);
     }
 }
 
-const bot = new TelegramBotIp(token, { polling: true });
+add_action('JavaScript');
+add_action('Python');
+add_action('C#');
+add_action('C++');
+add_action('PHP');
+add_action('Java');
+add_action('Go');
+add_action('Swift');
+add_action('Kotlin');
 
-bot.getMyCommands([
-    { comand: '/start', description: 'Начало работы' },
-    { comand: '/langage', description: 'Выбрать язык программирования' },
-    { comand: '/level', description: 'Вабрать уровень подготовки' }
-]);
+bot.launch();
 
-bot.on('message', async msg => {
-    const text = msg.text;
-    const chat_id = msg.chat.id;
-
-    let user_lang = '';
-    let user_level = '';
-
-    switch (text) {
-        case '/start':
-            await bot.sendMessage(chat_id, 'Выбирите язык программирования', keyboard_lang);
-            break;
-
-        case text:
-            if(check_lang(text, program_languges) == true){
-                // get_jobs(text);
-                await bot.sendMessage(chat_id, 'Ищем');
-            } else {
-                await bot.sendSticker(chat_id, 'https://tlgrm.ru/_/stickers/ec0/cef/ec0cef02-04d5-4091-a18f-fee3aaf0a0b0/8');
-                await bot.sendMessage(chat_id, 'Я не знаю такого языка программирования', keyboard_lang);
-            }
-            break;
-
-        default:
-            break;
-    }
-
-});
+process.once('SIGINT', () => bot.stop('SIGINT'));
+process.once('SIGTERM', () => bot.stop('SIGTERM'));
