@@ -3,6 +3,8 @@ require('dotenv').config();
 
 const comands = require('./module/constants');
 
+const Job = require('./module/Job');
+
 const bot = new Telegraf(process.env.API_BOT);
 
 bot.start((ctx) => {
@@ -25,18 +27,28 @@ bot.command('jobs', async (ctx) => {
 });
 
 function add_action(name) {
-    let job = {}
+    let job;
+    let job_str;
     try {
         bot.action(name, async (ctx) => {
             await ctx.answerCbQuery();
             await fetch(`https://api.hh.ru/vacancies/?text=${name}`)
                 .then(data => data.json())
                 .then(data => {
-                    job.name = data.items[0].name;
-                    job.city = `Город: ${data.items[0].address.city}`;
+                    job = new Job(
+                        data.items[0].id,
+                        data.items[0].name,
+                        data.items[0].area.name,
+                        data.items[0].salary,
+                        data.items[0].address
+                    );
+                    job_str = `
+                    ${job.name}
+Город: ${job.area_name}
+                    `;
                 })
 
-            await ctx.reply(name, Markup.inlineKeyboard(
+            await ctx.replyWithHTML(job_str, Markup.inlineKeyboard(
                 [
                     [Markup.button.callback('Смотреть', 'watch')]
                 ]
