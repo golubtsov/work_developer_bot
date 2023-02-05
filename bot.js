@@ -1,58 +1,55 @@
 const { Telegraf, Markup } = require('telegraf');
 require('dotenv').config();
 
-const comands = require('./module/constants');
+const {
+    BOT_COMANDS, 
+    LANDS_KEYBOARD,
+    MORE_INFO_KEYBOARD
+} = require('./module/constants');
 
 const Job = require('./module/Job');
+const About_Job = require('./module/About_Job');
 
 const bot = new Telegraf(process.env.API_BOT);
 
 bot.start((ctx) => {
-    ctx.replyWithHTML(`Добро пожаловать! Чтобы начать поиск вакансий, укажите команду /вакансии`);
+    ctx.replyWithHTML(`Добро пожаловать! Чтобы начать поиск вакансий, укажите команду /jobs`);
 });
-bot.help((ctx) => ctx.reply(comands.bot_comands));
+bot.help((ctx) => ctx.reply(BOT_COMANDS));
 
 bot.command('jobs', async (ctx) => {
     try {
-        await ctx.reply('Выбирите язык программирования', Markup.inlineKeyboard(
-            [
-                [Markup.button.callback('JavaScript', 'JavaScript'), Markup.button.callback('Python', 'Python'), Markup.button.callback('C#', 'C#')],
-                [Markup.button.callback('C++', 'C++'), Markup.button.callback('PHP', 'PHP'), Markup.button.callback('Java', 'Java')],
-                [Markup.button.callback('Go', 'Go'), Markup.button.callback('Swift', 'Swift'), Markup.button.callback('Kotlin', 'Kotlin')]
-            ]
-        ));
+        console.log(LANDS_KEYBOARD)
+        await ctx.reply('Выбирите язык программирования', LANDS_KEYBOARD);
     } catch (e) {
         console.error(e);
     }
 });
 
 function add_action(name) {
-    let job;
-    let job_str;
+    let about_job;
     try {
         bot.action(name, async (ctx) => {
             await ctx.answerCbQuery();
+            // получаем от API hh.ru вакансии
             await fetch(`https://api.hh.ru/vacancies/?text=${name}`)
                 .then(data => data.json())
                 .then(data => {
-                    job = new Job(
+                    let job = new Job(
                         data.items[0].id,
                         data.items[0].name,
                         data.items[0].area.name,
                         data.items[0].salary,
                         data.items[0].address
                     );
-                    job_str = `
-                    ${job.name}
-Город: ${job.area_name}
-                    `;
+                    job.check_salary();
+
+                    let note = new About_Job();
+                    about_job = note.create_note_job(job);
+                    
                 })
 
-            await ctx.replyWithHTML(job_str, Markup.inlineKeyboard(
-                [
-                    [Markup.button.callback('Смотреть', 'watch')]
-                ]
-            ));
+            await ctx.replyWithHTML(about_job, MORE_INFO_KEYBOARD);
         });
     } catch (e) {
         console.error(e);

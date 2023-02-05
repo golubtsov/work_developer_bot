@@ -12,6 +12,12 @@ class Job {
         this.salary = salary,
         this.address = address
     }
+
+    check_salary(){
+        if(this.salary == null){
+            this.salary = 'Не указано'
+        }
+    }
 }
 
 module.exports = Job;

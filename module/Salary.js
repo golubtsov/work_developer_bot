@@ -3,23 +3,13 @@
 
 class Salary {
 
-    // from - св-во salary (зарплата от), currency - св-во salary (валюта)
-    // ф-ия проверяет равно from null или нет
-    check_from(from, currency) {
-        if (from == null) {
-            this.from = 'Не указано'
-        } else {
-            this.from = `${from} ${currency}`
-        }
-    }
-
-    // to - св-во salary (зарплата до), currency - св-во salary (валюта)
-    // ф-ия проверяет равно to null или нет
-    check_to(to, currency) {
-        if (to == null) {
-            this.to = 'Не указано'
-        } else {
-            this.to = `${to} ${currency}`
+    check_from_to(from, to, currency) {
+        if (from == null && to != null) {
+            this.from_to = `до ${to} ${currency}`;
+        } else if(from != null && to == null){
+            this.from_to = `от ${from} ${currency}`;
+        } else if(from != null && to != null){
+            this.from_to = `от ${to} ${currency} до ${to} ${currency}`;
         }
     }
 }
