@@ -16,7 +16,9 @@ const LANDS_KEYBOARD = Markup.inlineKeyboard(
 
 const MORE_INFO_KEYBOARD = Markup.inlineKeyboard(
     [
-        [Markup.button.callback('Смотреть', 'watch')]
+        [Markup.button.callback('Смотреть еще', 'watch')],
+        [Markup.button.callback('Подробнее', 'learn_more')],
+        [Markup.button.callback('Остановить', 'stop')],
     ]
 );
 

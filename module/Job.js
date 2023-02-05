@@ -3,14 +3,12 @@ class Job {
         id,
         name,
         area_name,
-        salary,
-        address
+        salary
     ) {
         this.id = id,
         this.name = name,
         this.area_name = area_name,
-        this.salary = salary,
-        this.address = address
+        this.salary = salary
     }
 
     check_salary(){

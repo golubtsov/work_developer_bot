@@ -19,17 +19,20 @@ bot.help((ctx) => ctx.reply(BOT_COMANDS));
 
 bot.command('jobs', async (ctx) => {
     try {
-        console.log(LANDS_KEYBOARD)
         await ctx.reply('Выбирите язык программирования', LANDS_KEYBOARD);
     } catch (e) {
         console.error(e);
     }
 });
 
-function add_action(name) {
+let str_find_name = 'Язык программирования не указан. Чтобы начать просмотр вакансий, наберите /jobs и выбирите язык.';
+let count = 0;
+
+function get_info_job(name) {
     let about_job;
     try {
         bot.action(name, async (ctx) => {
+            str_find_name = name;
             await ctx.answerCbQuery();
             // получаем от API hh.ru вакансии
             await fetch(`https://api.hh.ru/vacancies/?text=${name}`)
@@ -40,7 +43,6 @@ function add_action(name) {
                         data.items[0].name,
                         data.items[0].area.name,
                         data.items[0].salary,
-                        data.items[0].address
                     );
                     job.check_salary();
 
@@ -49,22 +51,49 @@ function add_action(name) {
                     
                 })
 
-            await ctx.replyWithHTML(about_job, MORE_INFO_KEYBOARD);
+            await ctx.reply(about_job, MORE_INFO_KEYBOARD);
         });
     } catch (e) {
         console.error(e);
     }
 }
 
-add_action('JavaScript');
-add_action('Python');
-add_action('C#');
-add_action('C++');
-add_action('PHP');
-add_action('Java');
-add_action('Go');
-add_action('Swift');
-add_action('Kotlin');
+function get_next_job(){
+    try {
+        bot.action('watch', async (ctx) => {
+            await ctx.answerCbQuery();
+            await ctx.reply(`Следующая вакансия - ${str_find_name}`);
+        })
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+function stop(){
+    try {
+        bot.action('stop', async (ctx) => {
+            str_find_name = 'Поиск остановлен. Чтобы начать заново, наберите /jobs';
+            await ctx.answerCbQuery();
+            await ctx.reply(str_find_name);
+        })
+    } catch (e) {
+        console.error(e)
+    }
+}
+
+get_info_job('JavaScript');
+get_info_job('Python');
+get_info_job('C#');
+get_info_job('C++');
+get_info_job('PHP');
+get_info_job('Java');
+get_info_job('Go');
+get_info_job('Swift');
+get_info_job('Kotlin');
+
+get_next_job();
+
+stop();
 
 bot.launch();
 
