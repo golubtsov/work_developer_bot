@@ -10,6 +10,7 @@ const {
 const Job = require('./module/Job');
 const About_Job = require('./module/About_Job');
 const Id_Job = require('./module/Id_Job');
+const About_Job_Id = require('./module/About_Job_Id');
 
 let str_find_name = 'Язык программирования не указан. Чтобы начать просмотр вакансий, наберите /jobs и выбирите язык.';
 let count = 0;
@@ -111,6 +112,7 @@ function stop(){
 }
 
 function learn_more(){
+    let text_job = '';
     try {
         bot.action('learn_more', async (ctx) => {
             await ctx.answerCbQuery();
@@ -124,14 +126,17 @@ function learn_more(){
                         data.area.name,
                         data.salary,
                         data.address,
-                        data.experience,
+                        data.experience.name,
                         data.key_skills
                     );
-
-                    console.log(id_job_class);
+                    id_job_class.check_salary(); 
+                    
+                    let info_job = new About_Job_Id(id_job_class);
+                    info_job.check_skills();
+                    text_job = info_job.create_note();
                 })
 
-            await ctx.reply(id_job, MORE_INFO_KEYBOARD);
+            await ctx.reply(text_job, MORE_INFO_KEYBOARD);
         });
     } catch (e) {
         console.error(e);

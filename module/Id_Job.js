@@ -7,6 +7,12 @@ class Id_Job extends Job{
         this.experience = key_skills,
         this.key_skills = address
     }
+
+    check_salary(){
+        if(this.salary == null){
+            this.salary = 'Не указано'
+        }
+    }
 }
 
 module.exports = Id_Job;
