@@ -1,20 +1,20 @@
-const { Telegraf, Markup } = require('telegraf');
+const { Telegraf } = require('telegraf');
 require('dotenv').config();
 
 const {
-    BOT_COMANDS, 
+    BOT_COMANDS,
     LANDS_KEYBOARD,
-    MORE_INFO_KEYBOARD
+    MORE_INFO_KEYBOARD,
+    STOP_POISK
 } = require('./module/constants');
 
 const Job = require('./module/Job');
-const About_Job = require('./module/About_Job');
-const Id_Job = require('./module/Id_Job');
-const About_Job_Id = require('./module/About_Job_Id');
 
-let str_find_name = 'Язык программирования не указан. Чтобы начать просмотр вакансий, наберите /jobs и выбирите язык.';
+
 let count = 0;
-let id_job = 0;
+let id_job;
+let info_job;
+let name_lang;
 
 const bot = new Telegraf(process.env.API_BOT);
 
@@ -27,39 +27,48 @@ bot.command('jobs', async (ctx) => {
     try {
         str_find_name = 'Язык программирования не указан. Чтобы начать просмотр вакансий, наберите /jobs и выбирите язык.';
         count = 0;
-        id_job = 0;
         await ctx.reply('Выбирите язык программирования', LANDS_KEYBOARD);
     } catch (e) {
         console.error(e);
     }
 });
 
+async function get_jobs(name) {
+    name_lang = name;
+    await fetch(`https://api.hh.ru/vacancies/?text=${name}`)
+        .then(data => data.json())
+        .then(data => {
+            id_job = data.items[count].id;
+        })
+    await fetch(`https://api.hh.ru/vacancies/${id_job}`)
+        .then(data => data.json())
+        .then(data => {
+            info_job = data;
+        })
+}
 
-function get_info_job(name) {
-    let about_job;
+function get_action_btn(name) {
     try {
         bot.action(name, async (ctx) => {
-            str_find_name = name;
             await ctx.answerCbQuery();
-            // получаем от API hh.ru вакансии
-            await fetch(`https://api.hh.ru/vacancies/?text=${name}`)
-                .then(data => data.json())
-                .then(data => {
-                    let job = new Job(
-                        data.items[count].id,
-                        data.items[count].name,
-                        data.items[count].area.name,
-                        data.items[count].salary,
-                    );
-                    job.check_salary();
+            await get_jobs(name);
 
-                    let note = new About_Job();
-                    about_job = note.create_note_job(job);
-                    
-                    id_job = job.id;
-                })
+            let job = new Job(
+                info_job.id,
+                info_job.name,
+                info_job.salary,
+                info_job.address,
+                info_job.experience.name,
+                info_job.key_skills
+            );
 
-            await ctx.reply(about_job, MORE_INFO_KEYBOARD);
+            job.check_salary();
+            job.check_from_to();
+            job.check_adress();
+            job.check_skills();
+            let note = job.create_note();
+
+            await ctx.reply(note, MORE_INFO_KEYBOARD);
 
             count++;
         });
@@ -68,28 +77,28 @@ function get_info_job(name) {
     }
 }
 
-function get_next_job(){
+function get_next_job() {
     try {
         bot.action('watch', async (ctx) => {
             await ctx.answerCbQuery();
-            // получаем от API hh.ru вакансии
-            await fetch(`https://api.hh.ru/vacancies/?text=${str_find_name}`)
-                .then(data => data.json())
-                .then(data => {
-                    let job = new Job(
-                        data.items[count].id,
-                        data.items[count].name,
-                        data.items[count].area.name,
-                        data.items[count].salary,
-                    );
-                    job.check_salary();
+            await get_jobs(name_lang);
 
-                    let note = new About_Job();
-                    about_job = note.create_note_job(job);
-                    
-                })
+            let job = new Job(
+                info_job.id,
+                info_job.name,
+                info_job.salary,
+                info_job.address,
+                info_job.experience.name,
+                info_job.key_skills
+            );
 
-            await ctx.reply(about_job, MORE_INFO_KEYBOARD);
+            job.check_salary();
+            job.check_from_to();
+            job.check_adress();
+            job.check_skills();
+            let note = job.create_note();
+
+            await ctx.reply(note, MORE_INFO_KEYBOARD);
 
             count++;
         })
@@ -98,66 +107,31 @@ function get_next_job(){
     }
 }
 
-function stop(){
+function stop() {
     try {
         bot.action('stop', async (ctx) => {
-            str_find_name = 'Поиск остановлен. Чтобы начать заново, наберите /jobs';
             count = 0;
             await ctx.answerCbQuery();
-            await ctx.reply(str_find_name);
+            await ctx.reply(STOP_POISK);
         })
     } catch (e) {
         console.error(e)
     }
 }
 
-function learn_more(){
-    let text_job = '';
-    try {
-        bot.action('learn_more', async (ctx) => {
-            await ctx.answerCbQuery();
-
-            await fetch(`https://api.hh.ru/vacancies/${id_job}`)
-                .then(data => data.json())
-                .then(data => {
-                    let id_job_class = new Id_Job(
-                        data.id,
-                        data.name,
-                        data.area.name,
-                        data.salary,
-                        data.address,
-                        data.experience.name,
-                        data.key_skills
-                    );
-                    id_job_class.check_salary(); 
-                    
-                    let info_job = new About_Job_Id(id_job_class);
-                    info_job.check_skills();
-                    text_job = info_job.create_note();
-                })
-
-            await ctx.reply(text_job, MORE_INFO_KEYBOARD);
-        });
-    } catch (e) {
-        console.error(e);
-    }
-}
-
-get_info_job('JavaScript');
-get_info_job('Python');
-get_info_job('C#');
-get_info_job('C++');
-get_info_job('PHP');
-get_info_job('Java');
-get_info_job('Go');
-get_info_job('Swift');
-get_info_job('Kotlin');
+get_action_btn('JavaScript');
+get_action_btn('Python');
+get_action_btn('C#');
+get_action_btn('C++');
+get_action_btn('PHP');
+get_action_btn('Java');
+get_action_btn('Go');
+get_action_btn('Swift');
+get_action_btn('Kotlin');
 
 get_next_job();
 
 stop();
-
-learn_more();
 
 bot.launch();
 
